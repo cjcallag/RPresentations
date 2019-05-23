@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Social Network Analysis in R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Department of Defense Analysis" />
+    <meta name="date" content="2019-05-23" />
+    <script src="libs/htmlwidgets/htmlwidgets.js"></script>
+    <script src="libs/jquery/jquery.min.js"></script>
+    <link href="libs/datatables-css/datatables-crosstalk.css" rel="stylesheet" />
+    <script src="libs/datatables-binding/datatables.js"></script>
+    <link href="libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+    <link href="libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+    <script src="libs/dt-core/js/jquery.dataTables.min.js"></script>
+    <link href="libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+    <script src="libs/crosstalk/js/crosstalk.min.js"></script>
+    <script src="libs/kePrint/kePrint.js"></script>
+    <link href="libs/vis/vis.css" rel="stylesheet" />
+    <script src="libs/vis/vis.min.js"></script>
+    <script src="libs/visNetwork-binding/visNetwork.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Social Network Analysis in R
+## CORE Lab
+### Department of Defense Analysis
+### 2019-05-23
+
+---
+
+
+
+
+
+
+
+# Background
+
+--
+Social network analysis (SNA) is one of the many analytic methods commonly used to understand groups and social formations. 
+--
+**The focus of this methodology is the relationships among individuals, which influence a person's behavior above and beyond the influence of his or her individual attributes (Valente 2010). **
+--
+As such, SNA enables analysts to understand how social ties help to define, enable, and constrain the knowledge, reach, and capacities of actors within groups (Cunningham, Everton, and Murphy 2016).
+
+--
+
+While social network research is **not** exclusively dependent on software applications, these do increase the efficiency of researchers. Here we will focus on **R**.
+
+
+---
+
+# Goals
+
+Here we will explore some of the key SNA features of the open-source programming language **R**, and a variety of packages - primarily **igraph** and **visNetwork**- developed to work with relational data. Specifically, we will:
+
+--
+  - Explore, structure, visualize, and analyze relational data with the **igraph** library
+
+--
+  - Build processes in **R** with **igraph** to streamline analysis
+  
+--
+  - Create interactive visualizations with the **visNetwork** package
+
+
+---
+
+# Getting Started: Loading Data
+
+Let's bring in data from an edgelist:
+
+
+```r
+read.csv(here::here("data/Familial.csv"), header = TRUE)
+```
+
+&lt;br&gt;
+
+<div id="htmlwidget-97dd8277e51c82d08250" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-97dd8277e51c82d08250">{"x":{"filter":"none","fillContainer":true,"data":[["Adonis","Adonis","Adonis","Bananas","Bananas","Bananas","Bananas","Bat G.","Bat G.","Big G.","Boots","Boots","Boots","Boots","Boxcar","Boxcar","Brains","Brains","Fat Boy","Fat Boy","Fat Boy","Slingshot","Freckles","Freckles","Ghost","Goldie","Goldie","Pookey","Icepick","Snake"],["Boxcar","Ghost","Jelly","Blue Eyes","Brains","Slingshot","Gremlin","Big G.","Blaze","Blaze","Fat Boy","Freckles","Icepick","Repo Girl","Ghost","Jelly","Slingshot","Gremlin","Freckles","Icepick","Repo Girl","Gremlin","Icepick","Repo Girl","Jelly","Pookey","O.G.","O.G.","Repo Girl","Sonny Black"],["Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial"]],"container":"<table class=\"cell-border stripe fill-container\">\n  <thead>\n    <tr>\n      <th>Source<\/th>\n      <th>Target<\/th>\n      <th>Relationship<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLenght":7,"autoWidth":false,"dom":"tp","order":[],"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+
+---
+
+# Relationships Codebook
+
+  * Familial: (person-to-person) - Defined as any family connection through blood, adoption, or marriage.
+  * Financial: person-to-person) - Defined as two actors, in reporting or intelligence, who are explicitly stated as transferring funds between one another for any purpose, legal or illegal. 
+  * Friendship: (person-to-person) - Defined as two individuals who are explicitly stated as friends, or who are explicitly known as trusted confidants, in reports or in intelligence documentation. 
+  * Hierarchy: (person-to-person) - Defined as relationships between immediate superiors and subordinates in a non-criminal organization. 
+  
+  
+---
+
+# Relationships Import
+
+Friendship:
+
+```r
+familial &lt;- read.csv(here::here("data/Familial.csv"), header = TRUE)
+```
+
+Financial:
+
+```r
+financial &lt;- read.csv(here::here("data/Financial.csv"), header = TRUE)
+```
+
+Friendship:
+
+```r
+friendship &lt;- read.csv(here::here("data/Friendship.csv"), header = TRUE)
+```
+
+Hierarchy:
+
+```r
+hierarchy &lt;- read.csv(here::here("data/Hierarchy.csv"), header = TRUE)
+```
+
+
+---
+
+# Building Networks
+
+First, install the package:
+
+```r
+install.packages("igraph")
+```
+
+Now load the package:
+
+```r
+library(igraph)
+```
+
+Create an **igraph** graph:
+
+```r
+familialNet &lt;- igraph::graph_from_data_frame(familial,
+                                     directed = FALSE) 
+```
+
+
+---
+
+# Familial Network Object
+
+
+```r
+familialNet
+```
+
+```
+## IGRAPH cfeb5be UN-- 22 30 -- 
+## + attr: name (v/c), Relationship (e/c)
+## + edges from cfeb5be (vertex names):
+##  [1] Adonis   --Boxcar    Adonis   --Ghost     Adonis   --Jelly    
+##  [4] Bananas  --Blue Eyes Bananas  --Brains    Bananas  --Slingshot
+##  [7] Bananas  --Gremlin   Bat G.   --Big G.    Bat G.   --Blaze    
+## [10] Big G.   --Blaze     Boots    --Fat Boy   Boots    --Freckles 
+## [13] Boots    --Icepick   Boots    --Repo Girl Boxcar   --Ghost    
+## [16] Boxcar   --Jelly     Brains   --Slingshot Brains   --Gremlin  
+## [19] Fat Boy  --Freckles  Fat Boy  --Icepick   Fat Boy  --Repo Girl
+## [22] Slingshot--Gremlin   Freckles --Icepick   Freckles --Repo Girl
+## + ... omitted several edges
+```
+
+--
+  * `name` listed as `(v/c)`, which denotes a vertex-level character attributes
+
+--
+  * `Relationship` listed as `(e/c)` or edge-level character attributes
+
+
+---
+
+# Familial Network Edges
+
+
+```r
+E(familialNet)
+```
+
+```
+## + 30/30 edges from cfeb5be (vertex names):
+##  [1] Adonis   --Boxcar      Adonis   --Ghost       Adonis   --Jelly      
+##  [4] Bananas  --Blue Eyes   Bananas  --Brains      Bananas  --Slingshot  
+##  [7] Bananas  --Gremlin     Bat G.   --Big G.      Bat G.   --Blaze      
+## [10] Big G.   --Blaze       Boots    --Fat Boy     Boots    --Freckles   
+## [13] Boots    --Icepick     Boots    --Repo Girl   Boxcar   --Ghost      
+## [16] Boxcar   --Jelly       Brains   --Slingshot   Brains   --Gremlin    
+## [19] Fat Boy  --Freckles    Fat Boy  --Icepick     Fat Boy  --Repo Girl  
+## [22] Slingshot--Gremlin     Freckles --Icepick     Freckles --Repo Girl  
+## [25] Ghost    --Jelly       Goldie   --Pookey      Goldie   --O.G.       
+## [28] Pookey   --O.G.        Icepick  --Repo Girl   Snake    --Sonny Black
+```
+
+
+```r
+ecount(familialNet)
+```
+
+```
+## [1] 30
+```
+
+
+---
+
+# Familial Network Nodes
+
+
+```r
+V(familialNet)
+```
+
+```
+## + 22/22 vertices, named, from cfeb5be:
+##  [1] Adonis      Bananas     Bat G.      Big G.      Boots      
+##  [6] Boxcar      Brains      Fat Boy     Slingshot   Freckles   
+## [11] Ghost       Goldie      Pookey      Icepick     Snake      
+## [16] Jelly       Blue Eyes   Gremlin     Blaze       Repo Girl  
+## [21] O.G.        Sonny Black
+```
+
+
+```r
+vcount(familialNet)
+```
+
+```
+## [1] 22
+```
+
+
+```r
+V(familialNet)$name
+```
+
+```
+##  [1] "Adonis"      "Bananas"     "Bat G."      "Big G."      "Boots"      
+##  [6] "Boxcar"      "Brains"      "Fat Boy"     "Slingshot"   "Freckles"   
+## [11] "Ghost"       "Goldie"      "Pookey"      "Icepick"     "Snake"      
+## [16] "Jelly"       "Blue Eyes"   "Gremlin"     "Blaze"       "Repo Girl"  
+## [21] "O.G."        "Sonny Black"
+```
+
+
+---
+
+# Familial Network Visualization
+
+
+```r
+plot.igraph(familialNet)
+```
+.center[
+![](SNAinR_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
+]
+
+
+---
+
+# Familial Network Visualization
+
+.pull-left[
+
+```r
+plot.igraph(familialNet,
+            # Nodes ====
+            vertex.label = NA,
+            vertex.color = "blue",
+            vertex.size = 5,
+            # Edge ====
+            edge.color = "black",
+            edge.arrow.size = 0,
+            edge.curved = TRUE,
+            # Other ====
+            margin = .01,
+            frame = FALSE,
+            main = "Familial Network"
+            )
+```
+
+.center[
+Arguments = 😄
+]
+]
+
+.pull-right[
+![](SNAinR_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+]
+
+
+---
+
+#So What?
+
+--
+.center[
+Automation! Automation! Automation! 
+]
+
+--
+.pull-left[
+
+```r
+read.csv(here::here("data/Financial.csv"), header = TRUE) %&gt;%
+  igraph::graph_from_data_frame(directed = FALSE) %&gt;%
+  igraph::plot.igraph(vertex.label=NA,
+            vertex.color="blue",
+            vertex.size=5,
+            edge.color="black",
+            edge.arrow.size=0,
+            edge.curved=TRUE, 
+            margin = .01,
+            frame = FALSE
+            )
+```
+
+.center[
+💸
+]
+]
+.pull-right[
+![](SNAinR_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+]
+
+
+---
+
+# Automation! Automation! Automation!
+
+.center[
+![](images/multipleCSVs.png)
+]
+
+
+---
+
+# Automation! Automation! Automation!
+
+.pull-left[
+
+```r
+files &lt;- list.files(path="data/onemode/",
+                    pattern = "*.csv",
+                    full.names = TRUE)
+files %&gt;%
+  purrr::map_dfr(., ~.x %&gt;% read_csv) %&gt;%
+  igraph::graph_from_data_frame(directed = FALSE) %&gt;%
+  igraph::set_edge_attr("color",
+                          value = dplyr::case_when(
+                            E(.)$Relationship == "Familial" ~ "#d7191c",
+                            E(.)$Relationship == "Financial" ~ "#fdae61",
+                            E(.)$Relationship == "Friendship" ~ "#abd9e9",
+                            E(.)$Relationship == "Hierarchy" ~ "#2c7bb6"
+                          )) %&gt;%
+  igraph::plot.igraph(vertex.label=NA,
+                      vertex.color="grey",
+                      vertex.size=5,
+                      edge.arrow.size=0,
+                      edge.curved=TRUE, 
+                      margin = .01
+                      )
+```
+]
+.pull-right[
+![](SNAinR_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+]
+
+
+---
+
+# Metrics in Igraph
+
+Q: Now that you have data, how can you analyze it?
+
+--
+A: Start with network-level measures
+
+Metric  | Explanation | Command
+--------|-------------|---------
+Density  | Number of observed ties divided by possible number of ties  | `edge_density()`
+Average Degree  | Sum of ties divided by number of actors | `mean(degree())`
+Global Clustering  | Sum of each actor's clustering divided by number of actors  | `transitivity()`
+
+
+---
+
+# Network-Level Measures
+
+
+```r
+g &lt;- list.files(path="data/onemode/",
+                    pattern = "*.csv",
+                    full.names = TRUE) %&gt;%
+  purrr::map_dfr(read_csv) %&gt;%
+  igraph::graph_from_data_frame(directed = FALSE) %&gt;%
+  igraph::set.graph.attribute("density", edge_density(.)) %&gt;%
+  igraph::set.graph.attribute("avg_degree", mean(degree(.))) %&gt;%
+  igraph::set.graph.attribute("avg_clu_coef", transitivity(., "average")) 
+```
+
+
+```r
+graph_attr(g, "density")
+```
+
+```
+## [1] 0.1188406
+```
+
+
+```r
+graph_attr(g, "avg_degree")
+```
+
+```
+## [1] 5.347826
+```
+
+
+```r
+graph_attr(g, "avg_degree")
+```
+
+```
+## [1] 5.347826
+```
+
+
+---
+
+# Network-Level Measures Report
+
+
+```r
+data.frame(
+  "Density" = graph_attr(g, "density"),
+  "Avg. Degree" = graph_attr(g, "avg_degree"),
+  "Avg. Clustering Coefficient" = graph_attr(g, "avg_degree")
+) %&gt;%
+  knitr::kable(format = "html", digits = 3, caption = "Demo Table") %&gt;%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "condensed")) %&gt;%
+  kableExtra::add_footnote(label = "table footnote", notation = "number")
+```
+
+&lt;table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;"&gt;
+&lt;caption&gt;Demo Table&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; Density &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Avg..Degree &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Avg..Clustering.Coefficient &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 0.119 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 5.348 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 5.348 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;tfoot&gt;
+&lt;tr&gt;
+&lt;td style = 'padding: 0; border:0;' colspan='100%'&gt;&lt;sup&gt;1&lt;/sup&gt; table footnote&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tfoot&gt;
+&lt;/table&gt;
+
+
+---
+
+# Metrics in Igraph
+
+Q: Now that I've looked at network-level measures, what do I do?
+
+--
+
+A: Calculate vertex-level metrics.
+
+Metric  | Explanation | Command
+--------|-------------|---------
+Degree  | Count of actor's ties  | `degree()`
+Eigenvector  | Weights an actor's centrality by the centrality of its neighbors  | `evcent()`
+Betweenness  | How often each actor lies on the shortest path between all other actors  | `betweenness()`
+
+
+---
+
+# Vertex-Level Measures
+
+
+```r
+g %&gt;%
+  igraph::set.vertex.attribute("degree", value=degree(.)) %&gt;%
+  igraph::set.vertex.attribute("eigenvector", value=round(evcent(.)$vector, 2)) %&gt;%
+  igraph::set.vertex.attribute("betweenness", value=round(betweenness(.), 2)) %&gt;%
+  igraph::get.data.frame("vertices") %&gt;%
+  DT::datatable(rownames = F,
+                options = list(
+                  pageLength=10,
+                  dom="tp"
+                ))
+```
+
+<div id="htmlwidget-740ed04f2c681c973c37" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-740ed04f2c681c973c37">{"x":{"filter":"none","data":[["Adonis","Bananas","Bat G.","Big G.","Boots","Boxcar","Brains","Fat Boy","Slingshot","Freckles","Ghost","Goldie","Pookey","Icepick","Snake","Animal","Ant","Bugs","Bloodhound","Cranky","Enforcer","O.G.","4 Stroke","The Barber","Bow Wow","The Dentist","Frosty","Blood Messiah","Baby Face","Book Collector","Blue Eyes","Dapper Don","Fast Trigger","Scratch","Shadow","Jelly","Gremlin","Blaze","Repo Girl","Sonny Black","Crusier","Little Red","Ha-Ha","Clown","Smiley","Smoke"],[6,9,8,4,9,6,6,11,9,12,6,6,4,8,6,6,3,1,11,3,2,31,3,2,3,6,5,1,2,1,4,1,2,1,4,6,6,4,8,2,6,4,4,1,2,1],[0,0.31,0.25,0.07,0.66,0,0.19,0.74,0.34,0.69,0,0.43,0.32,0.6,0.27,0.15,0.13,0.02,0.41,0.24,0.15,1,0.18,0.16,0.27,0.32,0.31,0.01,0.04,0.11,0.18,0.08,0.16,0.01,0.07,0,0.19,0.07,0.6,0.06,0.35,0.06,0.3,0,0.14,0.11],[0,35.8,79,0,0,0,0,211.2,42.97,79,0,1.5,0,0,54.4,5,31.67,0,43.23,3.5,0,638.63,0,0,0,118.33,0.67,0,40,0,40,0,0,0,40,0,0,0,0,0,93.6,41.5,0,0,0,0]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>name<\/th>\n      <th>degree<\/th>\n      <th>eigenvector<\/th>\n      <th>betweenness<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":10,"dom":"tp","columnDefs":[{"className":"dt-right","targets":[1,2,3]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+
+---
+
+# Interactive Visuals
+
+First, install the package:
+
+```r
+install.packages("visNetwork")
+```
+
+Now load the package:
+
+```r
+library(visNetwork)
+```
+
+
+---
+
+# visNetwork with Igraph
+
+
+```r
+visNetwork::visIgraph(g) 
+```
+
+.center[
+<div id="htmlwidget-aa09519530e9423a71fe" style="width:504px;height:504px;" class="visNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-aa09519530e9423a71fe">{"x":{"nodes":{"id":["Adonis","Bananas","Bat G.","Big G.","Boots","Boxcar","Brains","Fat Boy","Slingshot","Freckles","Ghost","Goldie","Pookey","Icepick","Snake","Animal","Ant","Bugs","Bloodhound","Cranky","Enforcer","O.G.","4 Stroke","The Barber","Bow Wow","The Dentist","Frosty","Blood Messiah","Baby Face","Book Collector","Blue Eyes","Dapper Don","Fast Trigger","Scratch","Shadow","Jelly","Gremlin","Blaze","Repo Girl","Sonny Black","Crusier","Little Red","Ha-Ha","Clown","Smiley","Smoke"],"label":["Adonis","Bananas","Bat G.","Big G.","Boots","Boxcar","Brains","Fat Boy","Slingshot","Freckles","Ghost","Goldie","Pookey","Icepick","Snake","Animal","Ant","Bugs","Bloodhound","Cranky","Enforcer","O.G.","4 Stroke","The Barber","Bow Wow","The Dentist","Frosty","Blood Messiah","Baby Face","Book Collector","Blue Eyes","Dapper Don","Fast Trigger","Scratch","Shadow","Jelly","Gremlin","Blaze","Repo Girl","Sonny Black","Crusier","Little Red","Ha-Ha","Clown","Smiley","Smoke"],"x":[0.998005196564453,-0.336611898619086,0.0878219570509644,0.274361760540746,0.328115166006901,0.888743248650117,-0.455510241554375,0.232220091774788,-0.388052677812771,0.413505692252212,0.893122372775436,0.0274010143393451,0.0909273807513091,0.252137506964415,0.300414877766658,0.473838177717719,-0.431790353637013,-0.13325098198702,-0.2327173723584,0.0266554805612365,0.455374269427465,-0.100241344080523,-0.105083634163934,-0.317221484780785,-0.339959103691528,-0.444694104239281,-0.144390657091429,0.898996593576279,-0.79599837683437,-0.0783577278356514,-0.17307763111586,0.681186910528629,-0.46086063329776,-0.654114413698096,0.630673802582911,1,-0.530723548989241,0.179309218818043,0.389343407846797,0.540381114116112,0.263933185906982,-0.587931142937753,-0.262286950940926,-1,0.197373994873917,-0.215796495324691],"y":[0.653212960902759,0.550540898043523,0.479719061539155,0.699642549806861,-0.710231125150629,0.670406513470299,0.697185294929173,-0.485347750567475,0.436285618502677,-0.771911807825,0.538654945678932,0.232533570587164,0.106816243152159,-0.736167932367636,0.0732040936031573,-0.0925460362155829,-0.327671631954176,1,0.106058757374046,-0.211412809910102,-1,0.0631764660155099,-0.31409317181995,-0.140111361356529,0.0553055546543424,-0.0788637226640005,-0.146995757749582,-0.223665411809366,-0.0999181668042062,0.444967534669002,0.628712105719596,-0.832870045418041,0.166275264546072,-0.73759202425155,-0.179719451287903,0.515418903193774,0.617103575148703,0.764821761781288,-0.630119778913034,0.179980112119981,-0.142022553087584,-0.45371857887641,0.275025495187435,-0.0575056658118513,0.347151238628587,-0.418449101867718]},"edges":{"from":["Adonis","Adonis","Adonis","Bananas","Bananas","Bananas","Bananas","Bat G.","Bat G.","Big G.","Boots","Boots","Boots","Boots","Boxcar","Boxcar","Brains","Brains","Fat Boy","Fat Boy","Fat Boy","Slingshot","Freckles","Freckles","Ghost","Goldie","Goldie","Pookey","Icepick","Snake","Animal","Snake","Animal","Ant","Bugs","Bloodhound","Bloodhound","Cranky","Freckles","Fat Boy","Fat Boy","Slingshot","O.G.","Snake","O.G.","4 Stroke","Adonis","Adonis","Adonis","Bananas","Bananas","Bananas","Bananas","O.G.","Bat G.","Bat G.","Big G.","Boots","Boots","Boots","Boots","Bloodhound","Bloodhound","Slingshot","O.G.","Boxcar","Boxcar","Brains","Brains","Fat Boy","O.G.","Fat Boy","Fat Boy","Fat Boy","Slingshot","Freckles","Freckles","O.G.","Ghost","Goldie","Goldie","Pookey","O.G.","Icepick","Snake","4 Stroke","O.G.","Blood Messiah","Animal","Snake","Animal","Ant","Ant","Baby Face","The Dentist","Bananas","Bloodhound","Bat G.","Bat G.","Bat G.","Bat G.","O.G.","Boots","Bloodhound","Bloodhound","Bloodhound","Bloodhound","O.G.","O.G.","Freckles","O.G.","The Dentist","Freckles","O.G.","Slingshot","O.G.","Goldie","O.G.","O.G.","Snake","O.G.","Scratch","Shadow"],"to":["Boxcar","Ghost","Jelly","Blue Eyes","Brains","Slingshot","Gremlin","Big G.","Blaze","Blaze","Fat Boy","Freckles","Icepick","Repo Girl","Ghost","Jelly","Slingshot","Gremlin","Freckles","Icepick","Repo Girl","Gremlin","Icepick","Repo Girl","Jelly","Pookey","O.G.","O.G.","Repo Girl","Sonny Black","Shadow","Animal","Crusier","Little Red","Blue Eyes","Cranky","Ha-Ha","O.G.","Enforcer","O.G.","Crusier","Ha-Ha","Ha-Ha","O.G.","Crusier","Frosty","Boxcar","Ghost","Jelly","Blue Eyes","Brains","Slingshot","Gremlin","The Barber","Big G.","Blaze","Blaze","Fat Boy","Freckles","Icepick","Repo Girl","Bow Wow","The Dentist","Bloodhound","Bow Wow","Ghost","Jelly","Slingshot","Gremlin","Cranky","The Dentist","Freckles","Icepick","Repo Girl","Gremlin","Icepick","Repo Girl","Frosty","Jelly","Pookey","O.G.","O.G.","Ha-Ha","Repo Girl","Sonny Black","Frosty","4 Stroke","Shadow","Shadow","Animal","Crusier","O.G.","Little Red","Clown","Baby Face","O.G.","The Barber","Bloodhound","Goldie","O.G.","Smiley","Book Collector","Freckles","The Dentist","Fast Trigger","Frosty","O.G.","Blue Eyes","Bow Wow","Dapper Don","The Dentist","Little Red","Enforcer","Fast Trigger","O.G.","Frosty","O.G.","Smiley","Smoke","O.G.","Crusier","Little Red","Crusier"],"Relationship":["Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"edges":{"smooth":false},"physics":{"stabilization":false},"height":"80%","width":"140%"},"groups":null,"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","igraphlayout":{"type":"square"},"highlight":{"enabled":false,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+]
+
+
+---
+
+# visNetwork with Igraph Visualization Arguments
+
+
+```r
+g &lt;- g %&gt;%
+  # Node attributes ====
+  set.vertex.attribute("color.background", value = "grey") %&gt;%
+  set.vertex.attribute("color.border", value = "black") %&gt;%
+  set.vertex.attribute("borderWidth", value = 2) %&gt;% 
+  set.vertex.attribute("size", value = degree(.)) %&gt;% 
+  set.vertex.attribute("label", value = V(.)$name) %&gt;%
+  # Edge attributes ====
+  set.edge.attribute("width", value = scales::rescale(edge_betweenness(.), c(2,10))) %&gt;%
+  set.edge.attribute("color", value = "slategrey") %&gt;%
+  set.edge.attribute("smooth", value = FALSE) %&gt;%
+  set.edge.attribute("shadow", value = TRUE)
+```
+
+
+---
+
+# visNetwork with Igraph Visualization
+
+.center[
+<div id="htmlwidget-e77f44150fd652891446" style="width:504px;height:504px;" class="visNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-e77f44150fd652891446">{"x":{"nodes":{"id":["Adonis","Bananas","Bat G.","Big G.","Boots","Boxcar","Brains","Fat Boy","Slingshot","Freckles","Ghost","Goldie","Pookey","Icepick","Snake","Animal","Ant","Bugs","Bloodhound","Cranky","Enforcer","O.G.","4 Stroke","The Barber","Bow Wow","The Dentist","Frosty","Blood Messiah","Baby Face","Book Collector","Blue Eyes","Dapper Don","Fast Trigger","Scratch","Shadow","Jelly","Gremlin","Blaze","Repo Girl","Sonny Black","Crusier","Little Red","Ha-Ha","Clown","Smiley","Smoke"],"color.background":["grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey","grey"],"color.border":["black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black","black"],"borderWidth":[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],"size":[6,9,8,4,9,6,6,11,9,12,6,6,4,8,6,6,3,1,11,3,2,31,3,2,3,6,5,1,2,1,4,1,2,1,4,6,6,4,8,2,6,4,4,1,2,1],"label":["Adonis","Bananas","Bat G.","Big G.","Boots","Boxcar","Brains","Fat Boy","Slingshot","Freckles","Ghost","Goldie","Pookey","Icepick","Snake","Animal","Ant","Bugs","Bloodhound","Cranky","Enforcer","O.G.","4 Stroke","The Barber","Bow Wow","The Dentist","Frosty","Blood Messiah","Baby Face","Book Collector","Blue Eyes","Dapper Don","Fast Trigger","Scratch","Shadow","Jelly","Gremlin","Blaze","Repo Girl","Sonny Black","Crusier","Little Red","Ha-Ha","Clown","Smiley","Smoke"],"x":[0.366726827920306,-0.153919009576884,-0.705759370810585,-1,0.592918183641464,0.269452704797084,0.0390204838333377,0.334474295787726,-0.0599147452519048,0.692898955619343,0.16239359634134,-0.474220606280301,-0.389163260650666,0.520129923074593,-0.351239843874987,-0.214263285976702,0.239810263074153,-0.477698783754372,-0.176651131208871,0.101112467797321,0.900077698844324,-0.244117561292841,-0.597952532831287,-0.0685145071978248,-0.296190568096801,0.136755855193068,-0.456758844765078,-0.382144347938506,0.620924860489187,-0.66288295090157,-0.35925267507343,1,-0.378822412030702,0.670662088372647,-0.22454062268288,0.262381771461172,-0.0666712003302147,-0.985047189056317,0.548577342027618,-0.551781278959968,-0.0930153036340029,0.432635770520013,-0.0570023964310623,0.920085101065506,-0.705201591190641,-0.523812282657923],"y":[-0.918001049297067,0.701567237680109,0.264171792564958,0.21479275187572,-0.129102596028391,-1,0.824037123266257,-0.115567407106464,0.617614717434332,-0.205729521341644,-0.938942806807214,0.147806426336138,0.0326764575659251,-0.205660251846435,-0.206800440981293,-0.390243909491923,0.465067356295767,1,0.325734831192103,0.0922240064322351,-0.323463685012436,0.203185662352942,0.436594776805562,0.0838355280090644,0.389986001962785,0.348695628572399,0.342608330409993,-0.802671966278873,0.418700664937844,-0.0555249375041579,0.70570613089433,-0.105937820271151,0.513364109805875,0.786228725385375,-0.5596119452609,-0.850461404326464,0.869409557416536,0.336963556585395,-0.287144609822602,-0.43207638494135,-0.18796705538493,0.590013131682114,0.397558013091401,0.467338000646202,0.111748974086378,-0.136698159423233]},"edges":{"from":["Adonis","Adonis","Adonis","Bananas","Bananas","Bananas","Bananas","Bat G.","Bat G.","Big G.","Boots","Boots","Boots","Boots","Boxcar","Boxcar","Brains","Brains","Fat Boy","Fat Boy","Fat Boy","Slingshot","Freckles","Freckles","Ghost","Goldie","Goldie","Pookey","Icepick","Snake","Animal","Snake","Animal","Ant","Bugs","Bloodhound","Bloodhound","Cranky","Freckles","Fat Boy","Fat Boy","Slingshot","O.G.","Snake","O.G.","4 Stroke","Adonis","Adonis","Adonis","Bananas","Bananas","Bananas","Bananas","O.G.","Bat G.","Bat G.","Big G.","Boots","Boots","Boots","Boots","Bloodhound","Bloodhound","Slingshot","O.G.","Boxcar","Boxcar","Brains","Brains","Fat Boy","O.G.","Fat Boy","Fat Boy","Fat Boy","Slingshot","Freckles","Freckles","O.G.","Ghost","Goldie","Goldie","Pookey","O.G.","Icepick","Snake","4 Stroke","O.G.","Blood Messiah","Animal","Snake","Animal","Ant","Ant","Baby Face","The Dentist","Bananas","Bloodhound","Bat G.","Bat G.","Bat G.","Bat G.","O.G.","Boots","Bloodhound","Bloodhound","Bloodhound","Bloodhound","O.G.","O.G.","Freckles","O.G.","The Dentist","Freckles","O.G.","Slingshot","O.G.","Goldie","O.G.","O.G.","Snake","O.G.","Scratch","Shadow"],"to":["Boxcar","Ghost","Jelly","Blue Eyes","Brains","Slingshot","Gremlin","Big G.","Blaze","Blaze","Fat Boy","Freckles","Icepick","Repo Girl","Ghost","Jelly","Slingshot","Gremlin","Freckles","Icepick","Repo Girl","Gremlin","Icepick","Repo Girl","Jelly","Pookey","O.G.","O.G.","Repo Girl","Sonny Black","Shadow","Animal","Crusier","Little Red","Blue Eyes","Cranky","Ha-Ha","O.G.","Enforcer","O.G.","Crusier","Ha-Ha","Ha-Ha","O.G.","Crusier","Frosty","Boxcar","Ghost","Jelly","Blue Eyes","Brains","Slingshot","Gremlin","The Barber","Big G.","Blaze","Blaze","Fat Boy","Freckles","Icepick","Repo Girl","Bow Wow","The Dentist","Bloodhound","Bow Wow","Ghost","Jelly","Slingshot","Gremlin","Cranky","The Dentist","Freckles","Icepick","Repo Girl","Gremlin","Icepick","Repo Girl","Frosty","Jelly","Pookey","O.G.","O.G.","Ha-Ha","Repo Girl","Sonny Black","Frosty","4 Stroke","Shadow","Shadow","Animal","Crusier","O.G.","Little Red","Clown","Baby Face","O.G.","The Barber","Bloodhound","Goldie","O.G.","Smiley","Book Collector","Freckles","The Dentist","Fast Trigger","Frosty","O.G.","Blue Eyes","Bow Wow","Dapper Don","The Dentist","Little Red","Enforcer","Fast Trigger","O.G.","Frosty","O.G.","Smiley","Smoke","O.G.","Crusier","Little Red","Crusier"],"Relationship":["Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Familial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Financial","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Friendship","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate","Superior-Subordinate"],"width":[2,2,2,2.12815533980583,2.33203883495146,2.0537216828479,2.33203883495146,2.75728155339806,2.75728155339806,2,2.67961165048544,2.01941747572816,2,2,2,2,2.40582524271845,2,4.07766990291262,2.67961165048544,2.67961165048544,2.40582524271845,2.03883495145631,2.03883495145631,2,2.02912621359223,2.45307443365696,2.72815533980583,2,2.77669902912621,2.09708737864078,2.39611650485437,2.43883495145631,2.66343042071197,3.57281553398058,2.42071197411003,2.16699029126214,2.95016181229773,2.77669902912621,10,3.11456310679612,2.11650485436893,2.61553398058252,3.67766990291262,3.9495145631068,2.01294498381877,2,2,2,2.12815533980583,2.33203883495146,2.0537216828479,2.33203883495146,3.26860841423948,2.75728155339806,2.75728155339806,2,2.67961165048544,2.01941747572816,2,2,2.19546925566343,2.50809061488673,2.64466019417476,2.66925566343042,2,2,2.40582524271845,2,2.43495145631068,4.36245954692557,4.07766990291262,2.67961165048544,2.67961165048544,2.40582524271845,2.03883495145631,2.03883495145631,2.64983818770227,2,2.02912621359223,2.45307443365696,2.72815533980583,2.61553398058252,2,2.77669902912621,2.01294498381877,3.50809061488673,3.57281553398058,2.09708737864078,2.39611650485437,2.43883495145631,4.66666666666667,2.66343042071197,3.57281553398058,5.0873786407767,4.50614886731392,2.28478964401295,2.80582524271845,2.1747572815534,5.43689320388349,2.12621359223301,3.57281553398058,2.01941747572816,2.50809061488673,2.28478964401295,2.22135922330097,2.6957928802589,4.79223300970874,2.66925566343042,3.57281553398058,4.36245954692557,3.83818770226537,2.77669902912621,3.26860841423948,4.26278317152104,2.64983818770227,2.45307443365696,3.42718446601942,3.57281553398058,3.67766990291262,3.9495145631068,3.57281553398058,4.85436893203883],"color":["slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey","slategrey"],"smooth":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],"shadow":[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"edges":{"smooth":false},"physics":{"stabilization":false},"height":"100%","width":"140%"},"groups":null,"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","igraphlayout":{"type":"square"},"highlight":{"enabled":false,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+]
+
+
+---
+&lt;br&gt;
+.center[
+### Questions?
+]
+
+![](images/wanna_see_the_code.png)
+
+Dan Cunningham - dtcunning@nps.edu
+
+Christopher Callaghan - cjcallag@nps.edu
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
