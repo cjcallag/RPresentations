@@ -78,7 +78,7 @@ Here we will explore some of the key SNA features of the open-source programming
 
 * **here** - A package to make it easier to find your files by constructing paths to your project's files.
 * **tidyverse** - A collection of packages designed for data science. Users get packages such as dplyr, ggplot, purr, etc.  
-* **purrr** - A useful tool for working with vectors. 
+* **purr** - A useful tool for working with vectors. 
 * **DT** - A "wrapper" of the JavaScript Library "DataTables". We will use it to build interactive data tables. 
 * **kableExtra** - A package to help us build tables using HTML. 
 * **emo** - A package that allows users to insert emoji into RMarkdown documents (like this one!). 
@@ -334,10 +334,10 @@ read.csv(here::here("data/Financial.csv"), header = TRUE) %>%
 .pull-left[
 ```{r, echo=TRUE, eval=FALSE}
 files <- list.files(path="data/onemode/",
-                    pattern = "\\.csv$",
+                    pattern = "*.csv",
                     full.names = TRUE)
 files %>%
-  purrr::map_dfr(read_csv) %>%
+  purrr::map_dfr(., ~.x %>% read_csv) %>%
   igraph::graph_from_data_frame(directed = FALSE) %>%
   igraph::set_edge_attr("color",
                           value = dplyr::case_when(
